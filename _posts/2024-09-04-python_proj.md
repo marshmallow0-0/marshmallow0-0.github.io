@@ -9,7 +9,7 @@ sidebar:
     nav: "docs"
 search: false
 
-excerpt: "기존의 파이썬 코드에서 자료구조 사용"
+excerpt: "회고록"
 ---
 
 ## 파이썬 1차 프로젝트 회고록
@@ -22,7 +22,7 @@ excerpt: "기존의 파이썬 코드에서 자료구조 사용"
 
 
 개인적으로 처음 진행한 부분은 csv파일을 읽고 데이터 프레임을 구성하는 작업이었습니다. 
-### 파일 읽기
+#### 파일 읽기
 ```python
 
 import numpy as np
@@ -39,7 +39,7 @@ blood = pd.read_csv("../data/pressure.csv")
 smoke = pd.read_csv("../data/smoke.csv",  encoding="euc-kr")
 crimal = pd.read_csv("../data/crimal.csv", encoding="euc-kr")
 
-데이터 프레임 정보 확인
+# 데이터 프레임 정보 확인
 print(sad.head())
 print(stress.head())
 print(migration.head())
@@ -64,7 +64,7 @@ stress.set_index(stress.columns[0], inplace=True)
 
 위의 코드와 같이 먼저 전체적인 헤드를 파악하여 각각의 파일에 맞는 인덱스 설정과 헤더를 지정하여 데이터 가공과정을 거쳤습니다. 
 
-### 과정 진행
+#### 과정 진행
 데이터의 전체적인 흐름을 확인해 보기위해 지난 10년 동안의 지역별과 연도별을 한눈에 볼 수 있는 히트맵을 시각화해보았고, 평균적으로 지난 10년 동안 스트레스가 높은 지역들을 확인해 보았습니다.
 
 ```python
@@ -90,12 +90,12 @@ print(stress_mean_sorted)
 ```
 ![image](/img/python_proj_stress.png)
 
-### 시각화 연습1
+#### 시각화 결과1
 - 저희 팀이 상관요소로 선정했던 범죄율이 스트레스가 가장 높았던 인천 지역에 반영이 되어있는지 호기심에 그래프를 그려보았습니다. 그 결과 인천의 범죄율이 떨어지는 것을 확인하였고 지역별 범죄율 평균을 비교해본 결과 인천이 낮은 순위에 있는 것을 확인하여 
-간단하게 스트레스와 범죄율이 큰 상관이 있을 것 같진 않을 것 같다고 생각해볼 수 있었습니다.
+간단하게 스트레스와 범죄율이 큰 상관은 없을 것 같다고 예측해볼 수 있었습니다.
 ![image](/img/python_proj_crimal.png)
 
-### 시각화 연습2
+#### 시각화 결과2
 - 추가적으로 종속변수들간의 상관을 확인해보기 위해 필요한 데이터들을 평균내서 전체 상관계수를 구하고 이를 데이터 프레임으로 변형하여 히트맵으로 시각화 해보았습니다.  
   
 ``` python
@@ -131,6 +131,8 @@ plt.show()
 - 범죄율과 고혈압, 흡연율: 범죄율이 증가할수록 고혈압과 흡연율도 증가할 수 있다
 - 스트레스와 고혈압: 스트레스가 높을수록 고혈압이 약간 낮아지는 경향이 있다
 ![image](/img/python_proj_corr.png)
+
+#### 시각화 결과3
 
 ``` python
 import pandas as pd
@@ -175,13 +177,87 @@ plt.title('소득수준별 스트레스 비율')
 plt.show()
 
 ```
-### 결과
+위의 코드는 csv 파일을 자체적으로 가공하여 필요한 부분만 추출하다 보니 데이터를 통합하는 과정이 필요하였습니다. 기존의 5개의 분류(상, 중상, 중, 중하, 하)에서 3개의 분류로(상, 중, 하) 범주화하였고 이를 평균으로 데이터를 가공하여 그래프를 그렸습니다.
 ![image](/img/python_proj_pie.png)
 
-### 개선점
-- 충분한 예외처리가 되지 않아 에러 처리 능력이 부족합니다.
-- 함수를 사용하지 않아 가독성이 떨어지고 동일한 구문이 반복되고 있습니다.
 
-### 해결방안 
-- try-except 블록을 사용하여 숫자 입력에서 발생할 수 있는 예외를 처리할 것입니다.
-- 입력 검증과 메시지 출력 로직을 함수로 분리하여 중복을 줄일 것입니다.
+#### 시각화 결과4
+
+``` python
+import PyPDF2
+from collections import Counter
+from konlpy.tag import Okt
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+plt.rcParams['font.family'] ='Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] =False
+
+# PDF에서 텍스트 추출
+def extract_text_from_pdf(pdf_path, start_page=None, end_page=None):
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        text = ""
+        
+        # start_page와 end_page의 값 설정
+        if start_page is None:
+            start_page = 0  # 시작 페이지가 지정되지 않은 경우 첫 페이지부터 시작
+        if end_page is None:
+            end_page = len(reader.pages)  # 끝 페이지가 지정되지 않은 경우 마지막 페이지까지
+        
+        # 지정된 페이지 범위에서 텍스트 추출
+        for page_num in range(start_page, end_page):
+            text += reader.pages[page_num].extract_text()
+    
+    return text
+
+
+# 텍스트 전처리 및 형태소 분석
+def analyze_text(text):
+    okt = Okt()
+    nouns = okt.nouns(text)
+    # 한 글자 이상의 단어만 포함하고, "대", "위", "한", "해"를 포함하지 않은 단어만 필터링
+    filter_words = ["대", "위", "한", "해", "스"]
+    nouns = [noun for noun in nouns if len(noun) > 1 and not any(fw in noun for fw in filter_words)]
+    return nouns
+
+# 워드 클라우드 생성 함수
+def generate_wordcloud(word_freq):
+    wordcloud = WordCloud(
+        font_path='C:/Windows/Fonts/malgun.ttf',  # 폰트 경로
+        width=800,  # 이미지의 너비
+        height=400,  # 이미지의 높이
+        max_words=100,  # 최대 단어 수
+        max_font_size=100,  # 최대 폰트 크기
+        min_font_size=10,  # 최소 폰트 크기
+        background_color='white',  # 배경 색상
+        colormap='coolwarm',  # 색상 맵 설정
+        contour_color='black',  # 외곽선 색상
+        contour_width=2  # 외곽선 두께
+    ).generate_from_frequencies(word_freq)
+
+    # 그래프 설정 및 시각화
+    plt.figure(figsize=(12, 8))  # 그림 크기 설정
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")  # 축 제거
+    plt.title("스트레스 해소 방법 워드 클라우드", fontsize=24, color='navy', pad=20)  # 제목과 색상, 간격 설정
+    plt.show()
+
+# PDF 파일의 40번 페이지부터 41번 페이지까지 텍스트를 추출
+pdf_text = extract_text_from_pdf('stress.pdf', start_page=40, end_page=41) 
+
+# 형태소 분석을 통한 키워드 추출
+keywords = analyze_text(pdf_text)
+
+# 키워드 빈도 분석
+word_freq = Counter(keywords)
+
+# 워드 클라우드 생성 및 출력
+generate_wordcloud(word_freq)
+
+# 이미지 파일로 저장 (선택 사항)
+# plt.savefig('wordcloud.png')
+```
+
+![image](/img/python_proj_wordcloud.png)
+마지막으로 결론을 도출하는 과정에서 웹크롤링 기술을 사용하자는 의견이 나왔습니다. 그 결과 쿠팡과 네이버 쇼핑과 같은 사이트에서 스트레스 해소 방법에 대한 검색결과를 가져오자는 토론에 따라 각자 수행하였고 저는 시도를 해본 결과 '영양제'와 '장난감'이라는 빈출 단어만 나온다는 것을 확인해보며 다른 방법을 구상하였고 신뢰할 수 있는 데이터를 어디서 수집할지 고민하다 논문에서 나오는 결과로 테스트 해보자는 생각을 하게되었습니다. 특히 pdf를 저장하고 불필요한 내용을 제거하기 위해 특정 페이지만 추출할 수 있도록 구상하였고 1글자는 대부분 의미가 없는 단어로 판단하여 1 글자이하는 전부 제거하여 최종결과에 도출하였습니다. 
